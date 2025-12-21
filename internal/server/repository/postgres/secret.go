@@ -2,7 +2,9 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/s-turchinskiy/keeper/internal/utils/errorsutils"
@@ -33,7 +35,12 @@ func (r *SecretRepository) SetSecret(ctx context.Context, secret *models.Secret)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func(tx *sql.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(tx)
 
 	query := `
 		INSERT INTO keeper.secrets (name, user_id, data, hash)
@@ -168,7 +175,12 @@ func (r *SecretRepository) ListSecrets(ctx context.Context, userID string) ([]*m
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(rows)
 
 	var secrets []*models.Secret
 	for rows.Next() {
@@ -199,7 +211,12 @@ func (r *SecretRepository) ListSecretsWithStatuses(ctx context.Context, userID s
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(rows)
 
 	var secrets []*models.Secret
 	for rows.Next() {

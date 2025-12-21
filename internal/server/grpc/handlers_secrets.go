@@ -158,22 +158,21 @@ func (h *SecretHandler) GetUpdatedSecrets(req *proto.GetUpdatedSecretsRequest, g
 	//TODO: надо сделать проверку на userID, отправлять только на подключенные под именно этим юзером клиенты
 
 	//TODO: это все работает ненадежно, то клиент получает данные стрима, то нет и непонятно почему
-	for {
-		select {
-		case secretsForClients := <-h.secretsForClientsCh:
-			respSecrets := make([]*proto.Secret, len(secretsForClients))
-			for i, secret := range secretsForClients {
-				respSecrets[i] = convertServerSecretToProtoSecret(secret)
-			}
+	for secretsForClients := range h.secretsForClientsCh {
 
-			resp := &proto.GetUpdatedSecretsResponse{}
-			resp.Secrets = respSecrets
+		respSecrets := make([]*proto.Secret, len(secretsForClients))
+		for i, secret := range secretsForClients {
+			respSecrets[i] = convertServerSecretToProtoSecret(secret)
+		}
 
-			if err := g.Send(resp); err != nil {
-				log.Printf("GetUpdatedSecrets failed: %v", err)
-			}
+		resp := &proto.GetUpdatedSecretsResponse{}
+		resp.Secrets = respSecrets
+
+		if err := g.Send(resp); err != nil {
+			log.Printf("GetUpdatedSecrets failed: %v", err)
 		}
 	}
-	//return nil
+
+	return nil
 
 }

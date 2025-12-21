@@ -126,7 +126,7 @@ func (s *Service) SyncFromClient(ctx context.Context, userID string, clientSecre
 		switch {
 		case (scrt.serverSecret == nil && scrt.clientSecret.Deleted) ||
 			(scrt.clientSecret == nil && scrt.serverSecret.Deleted) ||
-			(scrt.clientSecret.LastModified == scrt.serverSecret.LastModified):
+			scrt.clientSecret.LastModified.Equal(scrt.serverSecret.LastModified):
 
 			register = false
 			continue

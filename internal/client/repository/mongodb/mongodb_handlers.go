@@ -7,6 +7,7 @@ import (
 	"github.com/s-turchinskiy/keeper/internal/client/repository"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
 
@@ -79,7 +80,12 @@ func (m MongoDB) ListSecrets(ctx context.Context) (secrets []*models.LocalSecret
 		return nil, err
 	}
 
-	defer cursor.Close(ctx)
+	defer func(cursor *mongo.Cursor, ctx context.Context) {
+		err = cursor.Close(ctx)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(cursor, ctx)
 
 	for cursor.Next(ctx) {
 		var secret *models.LocalSecret
