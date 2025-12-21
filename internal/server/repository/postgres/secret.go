@@ -118,7 +118,12 @@ func (r *SecretRepository) DeleteSecret(ctx context.Context, userID, secretID st
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func(tx *sql.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(tx)
 
 	query := `
 		DELETE FROM keeper.secrets
