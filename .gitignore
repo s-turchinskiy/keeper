@@ -33,4 +33,4 @@ go.work.sum
 # .idea/
 # .vscode/
 
-client
+./cmd/client/client
