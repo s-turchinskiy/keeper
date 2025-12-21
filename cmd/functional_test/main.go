@@ -147,6 +147,7 @@ func testService() {
 
 }
 
+//nolint:govet,errcheck
 func testGRPCClient() {
 
 	_ = godotenv.Load("./cmd/client/.env")

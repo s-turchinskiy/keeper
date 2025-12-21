@@ -122,19 +122,17 @@ func (s *Service) SyncFromClient(ctx context.Context, userID string, clientSecre
 	var register bool
 	for _, scrt := range comparisonMap {
 
-		register = true
+		register = false
 		switch {
 		case (scrt.serverSecret == nil && scrt.clientSecret.Deleted) ||
 			(scrt.clientSecret == nil && scrt.serverSecret.Deleted) ||
 			scrt.clientSecret.LastModified.Equal(scrt.serverSecret.LastModified):
 
-			register = false
 			continue
 
 		case scrt.clientSecret == nil:
 
 			updateInClients = append(updateInClients, scrt.serverSecret)
-			register = false
 
 		case scrt.serverSecret == nil:
 
@@ -142,6 +140,7 @@ func (s *Service) SyncFromClient(ctx context.Context, userID string, clientSecre
 			if err != nil {
 				return updateInClients, errorsutils.WrapError(err)
 			}
+			register = true
 
 		case scrt.clientSecret.LastModified.After(scrt.serverSecret.LastModified):
 
@@ -157,9 +156,10 @@ func (s *Service) SyncFromClient(ctx context.Context, userID string, clientSecre
 					return updateInClients, errorsutils.WrapError(err)
 				}
 			}
+			register = true
+
 		case scrt.serverSecret.LastModified.After(scrt.clientSecret.LastModified):
 			updateInClients = append(updateInClients, scrt.serverSecret)
-			register = false
 		default:
 			log.Println(ErrUnknownTypeOperation, "server secret:", scrt.serverSecret, "client secret:", scrt.clientSecret)
 			return updateInClients, errorsutils.WrapError(ErrUnknownTypeOperation)
