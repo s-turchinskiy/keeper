@@ -12,14 +12,14 @@ import (
 )
 
 type RedisClient struct {
-	rdb           *redis.Client
-	expirationSec time.Duration
+	rdb        *redis.Client
+	expiration time.Duration
 }
 
-func NewRedisClient(rdb *redis.Client, expirationSec time.Duration) *RedisClient {
+func NewRedisClient(rdb *redis.Client, expiration time.Duration) *RedisClient {
 	return &RedisClient{
-		rdb:           rdb,
-		expirationSec: expirationSec,
+		rdb:        rdb,
+		expiration: expiration,
 	}
 
 }
@@ -36,7 +36,7 @@ func (r *RedisClient) Set(ctx context.Context, secret *models.Secret) error {
 		return err
 	}
 
-	err = r.rdb.Set(ctx, key, bytes, r.expirationSec).Err()
+	err = r.rdb.Set(ctx, key, bytes, r.expiration).Err()
 	if err != nil {
 		fmt.Println(errorsutils.WrapError(err))
 		return err

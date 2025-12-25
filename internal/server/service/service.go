@@ -55,7 +55,7 @@ func NewService(tokenManager token.TokenManager,
 
 }
 
-func WithRedis(rdb *redis.Client, expirationSec time.Duration) OptionService {
+func WithRedis(rdb *redis.Client, expiration time.Duration) OptionService {
 
 	return func(s *Service) {
 
@@ -65,7 +65,7 @@ func WithRedis(rdb *redis.Client, expirationSec time.Duration) OptionService {
 			return
 		}
 
-		s.redisClient = redisclient.NewRedisClient(rdb, expirationSec)
+		s.redisClient = redisclient.NewRedisClient(rdb, expiration)
 
 		fmt.Println("connect to redis success")
 	}
