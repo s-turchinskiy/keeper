@@ -7,6 +7,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
+	github.com/redis/go-redis/v9 v9.17.2
 	github.com/zeebo/blake3 v0.2.4
 	go.mongodb.org/mongo-driver v1.7.5
 	golang.org/x/crypto v0.40.0
@@ -15,6 +16,8 @@ require (
 )
 
 require (
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -40,9 +43,8 @@ require (
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
-	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.6
-	github.com/mattn/go-sqlite3 v1.14.32
+	github.com/mattn/go-sqlite3 v1.14.32 // indirect
 	github.com/spf13/cobra v1.10.1
 	golang.org/x/sys v0.36.0 // indirect
 )

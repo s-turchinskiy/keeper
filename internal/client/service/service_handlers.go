@@ -93,10 +93,13 @@ func (s *Service) UpdateSecret(ctx context.Context, secret *models.LocalSecret) 
 
 func (s *Service) ReadSecret(ctx context.Context, secretID string) (*models.LocalSecret, error) {
 
-	secret, err := s.storage.GetSecret(ctx, secretID)
+	//закомментировано для теста метода GetSecret сервера
+	/*secret, err := s.storage.GetSecret(ctx, secretID)
 	if err != nil {
 		return nil, err
-	}
+	}*/
+
+	secret, err := s.getSecretFromServer(ctx, secretID)
 
 	return secret, err
 }

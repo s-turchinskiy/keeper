@@ -147,7 +147,7 @@ func testService() {
 
 }
 
-//nolint func testGRPCClient()
+// nolint func testGRPCClient()
 func testGRPCClient() {
 
 	_ = godotenv.Load("./cmd/client/.env")

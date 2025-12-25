@@ -2,6 +2,8 @@ package grpc
 
 import (
 	"context"
+	"errors"
+	"github.com/s-turchinskiy/keeper/internal/server/repository/postgres"
 	"github.com/s-turchinskiy/keeper/internal/server/service"
 	"github.com/s-turchinskiy/keeper/models/proto"
 	"google.golang.org/grpc"
@@ -82,7 +84,7 @@ func (h *SecretHandler) DeleteSecret(ctx context.Context, req *proto.DeleteSecre
 	}
 
 	err = h.service.DeleteSecret(ctx, userID, req.GetSecretId())
-	if err != nil {
+	if err != nil && !errors.Is(err, postgres.ErrSecretNotFound) {
 		log.Printf("DeleteSecret failed: %v", err)
 		return nil, status.Error(codes.Internal, "failed to delete secret")
 	}

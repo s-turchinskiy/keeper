@@ -16,7 +16,7 @@ func main() {
 		_ = godotenv.Load("./cmd/server/.env")
 	}
 
-	cfg, err := config.LoadCfg()
+	cfg, err := config.LoadCfg(config.WithRedis())
 	if err != nil {
 		log.Fatal("Failed to create app:", err)
 	}

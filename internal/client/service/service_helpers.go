@@ -62,6 +62,22 @@ func (s *Service) createLocalSecret(ctx context.Context, remoteSecret *models.Re
 	return nil
 }
 
+func (s *Service) getSecretFromServer(ctx context.Context, remoteSecretID string) (*models.LocalSecret, error) {
+	fmt.Printf("Get remote secret '%s'\n", remoteSecretID)
+
+	remoteSecret, err := s.grpcClient.GetSecret(ctx, remoteSecretID)
+	if err != nil {
+		return nil, err
+	}
+
+	localSecret, err := models.ConvertRemoteSecretToLocalSecret(s.cryptor, remoteSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	return localSecret, nil
+}
+
 func (s *Service) deleteRemoteSecret(ctx context.Context, secretID string) error {
 	fmt.Printf("Deleting remote secret '%s'\n", secretID)
 

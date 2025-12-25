@@ -73,7 +73,17 @@ func (s *Service) SetSecret(ctx context.Context, secret *models.Secret) error {
 }
 
 func (s *Service) GetSecret(ctx context.Context, userID, secretID string) (*models.Secret, error) {
-	return s.secretRepository.GetSecret(ctx, userID, secretID)
+
+	secret, _ := s.redisClient.Get(ctx, userID, secretID)
+	if secret != nil {
+		return secret, nil
+	}
+
+	secret, err := s.secretRepository.GetSecret(ctx, userID, secretID)
+
+	_ = s.redisClient.Set(ctx, secret)
+
+	return secret, err
 }
 
 func (s *Service) DeleteSecret(ctx context.Context, userID, secretID string) error {

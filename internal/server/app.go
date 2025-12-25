@@ -2,16 +2,16 @@ package server
 
 import (
 	"context"
+	"github.com/redis/go-redis/v9"
 	"github.com/s-turchinskiy/keeper/cmd/server/config"
 	grpc2 "github.com/s-turchinskiy/keeper/internal/server/grpc"
+	"github.com/s-turchinskiy/keeper/internal/server/repository"
 	"github.com/s-turchinskiy/keeper/internal/server/repository/postgres"
 	"github.com/s-turchinskiy/keeper/internal/server/service"
-	"log"
-	"net"
-
-	"github.com/s-turchinskiy/keeper/internal/server/repository"
 	"github.com/s-turchinskiy/keeper/internal/server/token"
 	"google.golang.org/grpc"
+	"log"
+	"net"
 )
 
 type App struct {
@@ -28,8 +28,13 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 	}
 
 	jwtManager := token.NewJWTManager(cfg.JWTSecret, cfg.JWTDuration)
-	svc := service.NewService(jwtManager, postgres.NewUserRepository(db), postgres.NewSecretRepository(db))
-	grpcServer := grpc2.NewGrpcServer(svc)
+	srvc := service.NewService(
+		jwtManager,
+		postgres.NewUserRepository(db),
+		postgres.NewSecretRepository(db),
+		service.WithRedis(redisClient(cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDB), cfg.RedisExpiration),
+	)
+	grpcServer := grpc2.NewGrpcServer(srvc)
 
 	return &App{
 		grpcServer: grpcServer,
@@ -51,4 +56,14 @@ func (a *App) Run() error {
 func (a *App) Stop(ctx context.Context) {
 	a.grpcServer.GracefulStop()
 	a.db.Close(ctx)
+}
+
+func redisClient(addr, password string, db int) *redis.Client {
+
+	return redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: password,
+		DB:       db,
+	})
+
 }

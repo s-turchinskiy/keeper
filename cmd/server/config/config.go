@@ -2,18 +2,31 @@ package config
 
 import (
 	"fmt"
+	"github.com/s-turchinskiy/keeper/internal/utils/errorsutils"
+	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
+type OptionConfig func(*Config)
+
 type Config struct {
-	DBURL       string        //Путь к базе данных
+	DBURL string //Путь к базе данных
+
 	JWTSecret   string        //Секрет для JWT
 	JWTDuration time.Duration //Время жизни JWT
-	GrpcAddr    string        //адрес GRPC сервера
+
+	GrpcAddr string //Адрес GRPC сервера
+
+	RedisAddr       string        //Путь к редису, example "localhost:6379"
+	RedisPassword   string        //Пароль от редиса, example ""
+	RedisDB         int           //Номер базы данных от редиса, example 0
+	RedisExpiration time.Duration //Время жизни кеша в редисе, если 0 то бессрочно
+
 }
 
-func LoadCfg() (*Config, error) {
+func LoadCfg(opts ...OptionConfig) (*Config, error) {
 
 	dbURL := os.Getenv("KEEPER_DB_URL")
 	if dbURL == "" {
@@ -42,5 +55,43 @@ func LoadCfg() (*Config, error) {
 		JWTDuration: time.Duration(jwtDuration) * time.Second,
 		GrpcAddr:    grpcAddr,
 	}
+
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
 	return cfg, nil
+}
+
+func WithRedis() OptionConfig {
+
+	return func(c *Config) {
+
+		if value := os.Getenv("KEEPER_REDIS_ADDR"); value != "" {
+			c.RedisAddr = value
+		}
+
+		if value := os.Getenv("KEEPER_REDIS_PASSWORD"); value != "" {
+			c.RedisPassword = value
+		}
+
+		if value := os.Getenv("KEEPER_REDIS_DB"); value != "" {
+			valTyped, err := strconv.Atoi(value)
+			if err == nil {
+				c.RedisDB = valTyped
+			} else {
+				log.Println(errorsutils.WrapError(err))
+			}
+		}
+
+		if value := os.Getenv("KEEPER_REDIS_EXPIRATION_SEC"); value != "" {
+			valTyped, err := strconv.Atoi(value)
+			if err == nil {
+				c.RedisExpiration = time.Duration(valTyped) * time.Second
+			} else {
+				log.Println(errorsutils.WrapError(err))
+			}
+		}
+
+	}
 }
