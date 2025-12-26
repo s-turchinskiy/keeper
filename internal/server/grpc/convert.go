@@ -1,21 +1,25 @@
 package grpc
 
 import (
-	"github.com/julien040/go-ternary"
 	"github.com/s-turchinskiy/keeper/internal/server/models"
 	"github.com/s-turchinskiy/keeper/models/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func convertProtoSecretToServerSecret(grpcSecret *proto.Secret, userID string) *models.Secret {
-	return &models.Secret{
+	secret := &models.Secret{
 		ID:           grpcSecret.GetId(),
 		UserID:       userID,
 		Data:         grpcSecret.GetData(),
 		Hash:         grpcSecret.GetHash(),
 		LastModified: grpcSecret.GetLastModified().AsTime(),
-		Deleted:      ternary.If[bool](grpcSecret.Deleted == nil, false, *grpcSecret.Deleted),
 	}
+
+	if grpcSecret.Deleted != nil {
+		secret.Deleted = *grpcSecret.Deleted
+	}
+
+	return secret
 }
 
 func convertServerSecretToProtoSecret(secret *models.Secret) *proto.Secret {
