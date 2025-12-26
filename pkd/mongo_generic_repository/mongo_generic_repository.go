@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/s-turchinskiy/keeper/internal/utils/errorsutils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -42,7 +43,7 @@ func (r *Repository[T]) GetAll(ctx context.Context) ([]*T, error) {
 	defer func(cursor *mongo.Cursor, ctx context.Context) {
 		err := cursor.Close(ctx)
 		if err != nil {
-
+			fmt.Println(errorsutils.WrapError(err))
 		}
 	}(cursor, ctx)
 
