@@ -130,7 +130,12 @@ func (s *Service) DeleteSecret(ctx context.Context, secretID string) error {
 		return err
 	}
 
-	err = s.grpcClient.DeleteSecret(ctx, secretID)
+	err = s.deleteLocalSecret(ctx, secretID)
+	if err != nil {
+		return err
+	}
+
+	err = s.deleteRemoteSecret(ctx, secretID)
 	if err != nil {
 		return err
 	}
