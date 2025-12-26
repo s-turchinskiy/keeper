@@ -7,6 +7,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
+	github.com/julien040/go-ternary v1.0.2
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/zeebo/blake3 v0.2.4
 	go.mongodb.org/mongo-driver v1.7.5
