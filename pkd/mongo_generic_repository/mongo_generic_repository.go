@@ -39,7 +39,12 @@ func (r *Repository[T]) GetAll(ctx context.Context) ([]*T, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get documents: %v", err)
 	}
-	defer cursor.Close(ctx)
+	defer func(cursor *mongo.Cursor, ctx context.Context) {
+		err := cursor.Close(ctx)
+		if err != nil {
+
+		}
+	}(cursor, ctx)
 
 	var results []*T
 	_ = cursor.All(ctx, &results)
