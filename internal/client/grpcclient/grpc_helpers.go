@@ -6,6 +6,11 @@ import (
 	"strconv"
 )
 
+func (c *GRPCClient) ConnectionNumber() uint64 {
+
+	return c.connectionNumber
+}
+
 func (c *GRPCClient) withAuthRetry(ctx context.Context, fn func(context.Context) error) error {
 	if err := c.ensureAuth(ctx); err != nil {
 		return err

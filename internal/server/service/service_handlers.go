@@ -64,12 +64,12 @@ func (s *Service) Login(ctx context.Context, login, password string) (string, *m
 	return token, user, nil
 }
 
-func (s *Service) SetSecret(ctx context.Context, secret *models.Secret) error {
+func (s *Service) CreateSecret(ctx context.Context, secret *models.Secret) error {
 	if len(secret.Data) > maxSecretSize {
 		return ErrSecretTooLarge
 	}
 
-	return s.secretRepository.Create(ctx, secret)
+	return s.secretRepository.CreateUpdate(ctx, secret)
 }
 
 func (s *Service) GetSecret(ctx context.Context, userID, secretID string) (*models.Secret, error) {
@@ -84,6 +84,14 @@ func (s *Service) GetSecret(ctx context.Context, userID, secretID string) (*mode
 	_ = s.redisClient.Set(ctx, secret)
 
 	return secret, err
+}
+
+func (s *Service) UpdateSecret(ctx context.Context, secret *models.Secret) error {
+	if len(secret.Data) > maxSecretSize {
+		return ErrSecretTooLarge
+	}
+
+	return s.secretRepository.CreateUpdate(ctx, secret)
 }
 
 func (s *Service) DeleteSecret(ctx context.Context, userID, secretID string) error {
@@ -146,7 +154,7 @@ func (s *Service) SyncFromClient(ctx context.Context, userID string, clientSecre
 
 		case scrt.serverSecret == nil:
 
-			err = s.secretRepository.Create(ctx, scrt.clientSecret)
+			err = s.secretRepository.CreateUpdate(ctx, scrt.clientSecret)
 			if err != nil {
 				return updateInClients, errorsutils.WrapError(err)
 			}
@@ -161,7 +169,7 @@ func (s *Service) SyncFromClient(ctx context.Context, userID string, clientSecre
 				}
 
 			} else {
-				err = s.secretRepository.Create(ctx, scrt.clientSecret)
+				err = s.secretRepository.CreateUpdate(ctx, scrt.clientSecret)
 				if err != nil {
 					return updateInClients, errorsutils.WrapError(err)
 				}

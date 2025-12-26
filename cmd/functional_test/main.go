@@ -104,7 +104,7 @@ func testService() {
 	}
 	for _, secret := range secrets {
 		if _, err = srvc.CreateSecret(ctx, secret.base, secret.data); err != nil {
-			fmt.Printf("Create failed secret %s: %v\n", secret.base.Name, err)
+			fmt.Printf("CreateUpdate failed secret %s: %v\n", secret.base.Name, err)
 		}
 	}
 
@@ -210,7 +210,7 @@ func testGRPCClient() {
 
 	for _, secret := range secrets {
 		if err := grpcClient.SetSecret(ctx, secret); err != nil {
-			log.Fatal("Create failed:", err)
+			log.Fatal("CreateUpdate failed:", err)
 		}
 	}
 

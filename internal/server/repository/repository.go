@@ -15,7 +15,7 @@ type UserRepositorier interface {
 }
 
 type SecretRepositorier interface {
-	Create(ctx context.Context, secret *models.Secret) error
+	CreateUpdate(ctx context.Context, secret *models.Secret) error
 	GetByID(ctx context.Context, userID, secretID string) (*models.Secret, error)
 	Delete(ctx context.Context, userID, secretID string) error
 	GetAll(ctx context.Context, userID string) ([]*models.Secret, error)

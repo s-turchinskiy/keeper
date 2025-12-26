@@ -34,18 +34,17 @@ func (h *SecretHandler) SetSecret(ctx context.Context, req *proto.SetSecretReque
 		return nil, status.Error(codes.Unauthenticated, "authentication required")
 	}
 
-	reqSecret := req.GetSecret()
+	secret := convertProtoSecretToServerSecret(req.GetSecret(), userID)
 
-	secret := convertProtoSecretToServerSecret(reqSecret, userID)
-
-	err = h.service.SetSecret(ctx, secret)
+	err = h.service.CreateSecret(ctx, secret)
 	if err != nil {
-		log.Printf("Create failed: %v", err)
+		log.Printf("Create failed: %v\n", err)
 		return nil, status.Error(codes.Internal, "failed to set secret, err: "+err.Error())
 	}
 
-	resp := &proto.SetSecretResponse{}
-	resp.Success = true
+	resp := &proto.SetSecretResponse{
+		Success: true,
+	}
 
 	h.secretsForClientsCh <- []*models.Secret{secret}
 
@@ -73,6 +72,29 @@ func (h *SecretHandler) GetSecret(ctx context.Context, req *proto.GetSecretReque
 
 	resp := &proto.GetSecretResponse{}
 	resp.Secret = respSecret
+
+	return resp, nil
+}
+
+func (h *SecretHandler) UpdateSecret(ctx context.Context, req *proto.UpdateSecretRequest) (*proto.UpdateSecretResponse, error) {
+	userID, err := getUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "authentication required")
+	}
+
+	secret := convertProtoSecretToServerSecret(req.GetSecret(), userID)
+
+	err = h.service.CreateSecret(ctx, secret)
+	if err != nil {
+		log.Printf("Update failed: %v\n", err)
+		return nil, status.Error(codes.Internal, "failed to update secret, err: "+err.Error())
+	}
+
+	resp := &proto.UpdateSecretResponse{
+		Success: true,
+	}
+
+	h.secretsForClientsCh <- []*models.Secret{secret}
 
 	return resp, nil
 }

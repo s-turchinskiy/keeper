@@ -45,6 +45,7 @@ message LoginResponse {
 service SecretService {
   rpc SetSecret(SetSecretRequest) returns (SetSecretResponse);
   rpc GetSecret(GetSecretRequest) returns (GetSecretResponse);
+  rpc UpdateSecret(UpdateSecretRequest) returns (UpdateSecretResponse);
   rpc DeleteSecret(DeleteSecretRequest) returns (DeleteSecretResponse);
   rpc ListSecrets(ListSecretsRequest) returns (ListSecretsResponse);
   rpc SyncSecretsFromClient(SyncSecretsFromClientRequest) returns (SyncSecretsFromClientResponse);
@@ -73,6 +74,14 @@ message GetSecretRequest {
 
 message GetSecretResponse {
   Secret secret = 1;
+}
+
+message UpdateSecretRequest {
+  Secret secret = 1;
+}
+
+message UpdateSecretResponse {
+  bool success = 1;
 }
 
 message DeleteSecretRequest {

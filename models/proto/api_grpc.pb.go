@@ -199,8 +199,9 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	SecretService_SetSecret_FullMethodName             = "/keeper.SecretService/SetSecret"
+	SecretService_SetSecret_FullMethodName             = "/keeper.SecretService/CreateSecret"
 	SecretService_GetSecret_FullMethodName             = "/keeper.SecretService/GetSecret"
+	SecretService_UpdateSecret_FullMethodName          = "/keeper.SecretService/UpdateSecret"
 	SecretService_DeleteSecret_FullMethodName          = "/keeper.SecretService/DeleteSecret"
 	SecretService_ListSecrets_FullMethodName           = "/keeper.SecretService/ListSecrets"
 	SecretService_SyncSecretsFromClient_FullMethodName = "/keeper.SecretService/SyncSecretsFromClient"
@@ -213,6 +214,7 @@ const (
 type SecretServiceClient interface {
 	SetSecret(ctx context.Context, in *SetSecretRequest, opts ...grpc.CallOption) (*SetSecretResponse, error)
 	GetSecret(ctx context.Context, in *GetSecretRequest, opts ...grpc.CallOption) (*GetSecretResponse, error)
+	UpdateSecret(ctx context.Context, in *UpdateSecretRequest, opts ...grpc.CallOption) (*UpdateSecretResponse, error)
 	DeleteSecret(ctx context.Context, in *DeleteSecretRequest, opts ...grpc.CallOption) (*DeleteSecretResponse, error)
 	ListSecrets(ctx context.Context, in *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error)
 	SyncSecretsFromClient(ctx context.Context, in *SyncSecretsFromClientRequest, opts ...grpc.CallOption) (*SyncSecretsFromClientResponse, error)
@@ -241,6 +243,16 @@ func (c *secretServiceClient) GetSecret(ctx context.Context, in *GetSecretReques
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetSecretResponse)
 	err := c.cc.Invoke(ctx, SecretService_GetSecret_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *secretServiceClient) UpdateSecret(ctx context.Context, in *UpdateSecretRequest, opts ...grpc.CallOption) (*UpdateSecretResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateSecretResponse)
+	err := c.cc.Invoke(ctx, SecretService_UpdateSecret_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -302,6 +314,7 @@ type SecretService_GetUpdatedSecretsClient = grpc.ServerStreamingClient[GetUpdat
 type SecretServiceServer interface {
 	SetSecret(context.Context, *SetSecretRequest) (*SetSecretResponse, error)
 	GetSecret(context.Context, *GetSecretRequest) (*GetSecretResponse, error)
+	UpdateSecret(context.Context, *UpdateSecretRequest) (*UpdateSecretResponse, error)
 	DeleteSecret(context.Context, *DeleteSecretRequest) (*DeleteSecretResponse, error)
 	ListSecrets(context.Context, *ListSecretsRequest) (*ListSecretsResponse, error)
 	SyncSecretsFromClient(context.Context, *SyncSecretsFromClientRequest) (*SyncSecretsFromClientResponse, error)
@@ -317,10 +330,13 @@ type SecretServiceServer interface {
 type UnimplementedSecretServiceServer struct{}
 
 func (UnimplementedSecretServiceServer) SetSecret(context.Context, *SetSecretRequest) (*SetSecretResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method SetSecret not implemented")
+	return nil, status.Error(codes.Unimplemented, "method CreateSecret not implemented")
 }
 func (UnimplementedSecretServiceServer) GetSecret(context.Context, *GetSecretRequest) (*GetSecretResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSecret not implemented")
+}
+func (UnimplementedSecretServiceServer) UpdateSecret(context.Context, *UpdateSecretRequest) (*UpdateSecretResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateSecret not implemented")
 }
 func (UnimplementedSecretServiceServer) DeleteSecret(context.Context, *DeleteSecretRequest) (*DeleteSecretResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteSecret not implemented")
@@ -387,6 +403,24 @@ func _SecretService_GetSecret_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SecretServiceServer).GetSecret(ctx, req.(*GetSecretRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SecretService_UpdateSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretServiceServer).UpdateSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecretService_UpdateSecret_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretServiceServer).UpdateSecret(ctx, req.(*UpdateSecretRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -464,12 +498,16 @@ var SecretService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SecretServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SetSecret",
+			MethodName: "CreateSecret",
 			Handler:    _SecretService_SetSecret_Handler,
 		},
 		{
 			MethodName: "GetSecret",
 			Handler:    _SecretService_GetSecret_Handler,
+		},
+		{
+			MethodName: "UpdateSecret",
+			Handler:    _SecretService_UpdateSecret_Handler,
 		},
 		{
 			MethodName: "DeleteSecret",

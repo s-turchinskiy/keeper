@@ -29,7 +29,7 @@ func NewSecretRepository(postgreDB *PostgreDB) *SecretRepository {
 	}
 }
 
-func (r *SecretRepository) Create(ctx context.Context, secret *models.Secret) error {
+func (r *SecretRepository) CreateUpdate(ctx context.Context, secret *models.Secret) error {
 
 	tx, err := r.db.Begin()
 	if err != nil {

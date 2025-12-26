@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/s-turchinskiy/keeper/internal/client/models"
+	"github.com/s-turchinskiy/keeper/internal/utils/errorsutils"
 	"io"
 	"log"
+	"strconv"
 )
 
 var ErrSecretAlreadyExist = errors.New("secret already exist")
@@ -90,12 +92,12 @@ func (s *Service) CreateSecret(ctx context.Context, base models.BaseSecret, data
 
 func (s *Service) UpdateSecret(ctx context.Context, secret *models.LocalSecret) error {
 
-	_, err := s.storage.UpdateByKey(ctx, secret.Name, secret)
+	secret, err := s.storage.UpdateByKey(ctx, secret.Name, secret)
 	if err != nil {
 		return err
 	}
 
-	err = s.replaceRemoteSecret(ctx, secret.Name)
+	err = s.replaceRemoteSecret(ctx, secret)
 	return err
 }
 
@@ -138,34 +140,43 @@ func (s *Service) DeleteSecret(ctx context.Context, secretID string) error {
 
 func (s *Service) GetUpdatedSecrets(ctx context.Context) error {
 
-	fmt.Printf("GetUpdatedSecrets starting run\n")
+	connNumber := strconv.FormatUint(s.grpcClient.ConnectionNumber(), 10)
+	fmt.Printf("conn %s. GetUpdatedSecrets starting run\n", connNumber)
 
 	var err error
 	for {
 
 		resp, err := s.grpcClient.GetStream().Recv()
 
-		log.Printf("GetUpdatedSecrets start getting secrets %v\n", resp.Secrets)
+		fmt.Printf("conn %s. GetUpdatedSecrets start getting secrets %v\n", connNumber, resp.Secrets)
 
 		if err == io.EOF {
-			log.Printf("GetUpdatedSecrets stopped\n")
+			fmt.Printf("conn %s. GetUpdatedSecrets stopped EOF\n", connNumber)
 			break
 		}
 		if err != nil {
-			log.Printf("GetUpdatedSecrets error: %v\n", err)
+			fmt.Printf("conn %s. GetUpdatedSecrets error: %v\n", connNumber, err)
 			break
 		}
 
 		for _, secret := range resp.Secrets {
 			if *secret.Deleted {
+
+				fmt.Printf("conn %s. GetUpdatedSecrets start deleting secret \"%s\"\n", connNumber, secret.Id)
 				err = s.deleteLocalSecret(ctx, secret.Id)
+				fmt.Printf("conn %s. GetUpdatedSecrets end deleting secret \"%s\"\n", connNumber, secret.Id)
 				if err != nil {
 					return nil
 				}
+
 			} else {
+
+				fmt.Printf("conn %s. GetUpdatedSecrets start updating secret \"%s\"\n", connNumber, secret.Id)
 
 				localSecret, err := s.storage.GetByKey(ctx, secret.Id)
 				if err != nil {
+					fmt.Printf("conn %s. GetUpdatedSecrets end updating secret \"%s\", error: %v\n",
+						connNumber, secret.Id, errorsutils.WrapError(err))
 					return nil
 				}
 
@@ -173,16 +184,22 @@ func (s *Service) GetUpdatedSecrets(ctx context.Context) error {
 				if localSecret.LastModified.Before(remoteSecret.LastModified) {
 					err = s.replaceLocalSecret(ctx, remoteSecret)
 					if err != nil {
+						fmt.Printf("conn %s. GetUpdatedSecrets end updating secret \"%s\", error: %v\n",
+							connNumber, secret.Id, errorsutils.WrapError(err))
 						return nil
+					} else {
+						fmt.Printf("conn %s. GetUpdatedSecrets end updating secret \"%s\", success\n", connNumber, secret.Id)
 					}
+				} else {
+					fmt.Printf("conn %s. GetUpdatedSecrets end updating secret \"%s\", LastModified equal\n", connNumber, secret.Id)
 				}
 			}
 		}
 
-		log.Printf("GetUpdatedSecrets end getting secrets\n")
+		fmt.Printf("conn %s. GetUpdatedSecrets end getting secrets\n", connNumber)
 
 	}
 
-	fmt.Printf("GetUpdatedSecrets stopped\n")
+	fmt.Printf("conn %s. GetUpdatedSecrets stopped\n", connNumber)
 	return err
 }

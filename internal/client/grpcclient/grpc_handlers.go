@@ -88,10 +88,8 @@ func (c *GRPCClient) Register(ctx context.Context, login, password string) (stri
 }
 
 func (c *GRPCClient) SetSecret(ctx context.Context, secret *models.RemoteSecret) error {
-	reqSecret := models.ConvertRemoteSecretToProtoSecret(secret)
-
 	req := &proto.SetSecretRequest{
-		Secret: reqSecret,
+		Secret: models.ConvertRemoteSecretToProtoSecret(secret),
 	}
 
 	return c.withAuthRetry(c.withConnNumber(ctx), func(authCtx context.Context) error {
@@ -129,6 +127,17 @@ func (c *GRPCClient) DeleteSecret(ctx context.Context, secretID string) error {
 
 	return c.withAuthRetry(c.withConnNumber(ctx), func(authCtx context.Context) error {
 		_, err := c.secretClient.DeleteSecret(authCtx, req)
+		return err
+	})
+}
+
+func (c *GRPCClient) UpdateSecret(ctx context.Context, secret *models.RemoteSecret) error {
+	req := &proto.UpdateSecretRequest{
+		Secret: models.ConvertRemoteSecretToProtoSecret(secret),
+	}
+
+	return c.withAuthRetry(c.withConnNumber(ctx), func(authCtx context.Context) error {
+		_, err := c.secretClient.UpdateSecret(authCtx, req)
 		return err
 	})
 }

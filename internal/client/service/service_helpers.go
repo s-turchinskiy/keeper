@@ -102,18 +102,19 @@ func (s *Service) replaceLocalSecret(ctx context.Context, remoteSecret *models.R
 	return nil
 }
 
-func (s *Service) replaceRemoteSecret(ctx context.Context, secretID string) error {
-	fmt.Printf("Replacing remote secret '%s'\n", secretID)
+func (s *Service) replaceRemoteSecret(ctx context.Context, localSecret *models.LocalSecret) error {
+	fmt.Printf("Replacing remote secret '%s'\n", localSecret.Name)
 
-	err := s.deleteRemoteSecret(ctx, secretID)
+	remoteSecret, err := models.ConvertLocalSecretToRemoteSecret(s.cryptor, localSecret)
 	if err != nil {
 		return err
 	}
 
-	err = s.createRemoteSecret(ctx, secretID)
+	err = s.grpcClient.UpdateSecret(ctx, remoteSecret)
 	if err != nil {
 		return err
 	}
 
 	return nil
+
 }
