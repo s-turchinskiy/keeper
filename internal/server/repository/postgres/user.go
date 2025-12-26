@@ -26,7 +26,7 @@ func NewUserRepository(postgreDB *PostgreDB) *UserRepository {
 	}
 }
 
-func (r *UserRepository) CreateUser(ctx context.Context, login, passwordHash string) (*models.User, error) {
+func (r *UserRepository) Create(ctx context.Context, login, passwordHash string) (*models.User, error) {
 	query := `
 		INSERT INTO keeper.users (login, password_hash) 
 		VALUES ($1, $2) 
@@ -48,7 +48,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, login, passwordHash str
 	return &user, nil
 }
 
-func (r *UserRepository) GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
+func (r *UserRepository) GetByLogin(ctx context.Context, login string) (*models.User, error) {
 	query := `
 		SELECT id, login, password_hash, created_at
 		FROM keeper.users
@@ -70,7 +70,7 @@ func (r *UserRepository) GetUserByLogin(ctx context.Context, login string) (*mod
 	return &user, nil
 }
 
-func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (*models.User, error) {
+func (r *UserRepository) GetByID(ctx context.Context, userID string) (*models.User, error) {
 	query := `
 		SELECT id, login, password_hash, created_at
 		FROM keeper.users

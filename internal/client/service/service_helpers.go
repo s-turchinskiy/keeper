@@ -9,12 +9,9 @@ import (
 func (s *Service) deleteLocalSecret(ctx context.Context, secretID string) error {
 	fmt.Printf("Deleting local secret '%s'\n", secretID)
 
-	ok, err := s.storage.DeleteSecret(ctx, secretID)
+	err := s.storage.DeleteByKey(ctx, secretID)
 	if err != nil {
 		return err
-	}
-	if !ok {
-		return fmt.Errorf("don't ok delete")
 	}
 
 	return nil
@@ -23,7 +20,7 @@ func (s *Service) deleteLocalSecret(ctx context.Context, secretID string) error 
 func (s *Service) createRemoteSecret(ctx context.Context, secretID string) error {
 	fmt.Printf("Creating remote secret '%s'\n", secretID)
 
-	localSecret, err := s.storage.GetSecret(ctx, secretID)
+	localSecret, err := s.storage.GetByKey(ctx, secretID)
 	if err != nil {
 		return err
 	}
@@ -54,7 +51,7 @@ func (s *Service) createLocalSecret(ctx context.Context, remoteSecret *models.Re
 		return err
 	}
 
-	_, err = s.storage.CreateSecret(ctx, localSecret)
+	_, err = s.storage.Create(ctx, localSecret)
 	if err != nil {
 		return err
 	}

@@ -13,7 +13,7 @@ type Servicer interface {
 	CreateSecret(ctx context.Context, base models.BaseSecret, data models.SecretData) (*models.LocalSecret, error)
 	ReadSecret(ctx context.Context, secretID string) (*models.LocalSecret, error)
 	UpdateSecret(ctx context.Context, secret *models.LocalSecret) error
-	DeleteSecret(ctx context.Context, secretID string) (bool, error)
+	DeleteSecret(ctx context.Context, secretID string) error
 	ListLocalSecrets(ctx context.Context) ([]*models.LocalSecret, error)
 
 	Close(ctx context.Context) error

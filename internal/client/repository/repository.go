@@ -6,11 +6,11 @@ import (
 )
 
 type Repositorier interface {
-	CreateSecret(ctx context.Context, secret *models.LocalSecret) (secretID string, err error)
-	GetSecret(ctx context.Context, secretID string) (*models.LocalSecret, error)
-	UpdateSecret(ctx context.Context, secret *models.LocalSecret) (bool, error)
-	DeleteSecret(ctx context.Context, secretID string) (bool, error)
-	ListSecrets(ctx context.Context) ([]*models.LocalSecret, error)
+	Create(ctx context.Context, secret *models.LocalSecret) (*models.LocalSecret, error)
+	GetAll(ctx context.Context) ([]*models.LocalSecret, error)
+	GetByKey(ctx context.Context, id string) (*models.LocalSecret, error)
+	UpdateByKey(ctx context.Context, id string, secret *models.LocalSecret) (*models.LocalSecret, error)
+	DeleteByKey(ctx context.Context, id string) error
 
 	Close(ctx context.Context) error
 }

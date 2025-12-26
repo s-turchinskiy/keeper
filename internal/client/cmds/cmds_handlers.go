@@ -157,7 +157,7 @@ func createSecretDeleteCommand() func(cmd *cobra.Command, args []string) error {
 		uuid := args[0]
 
 		service := getServiceFromCommand(cmd)
-		_, err := service.DeleteSecret(context.Background(), uuid)
+		err := service.DeleteSecret(context.Background(), uuid)
 		if err != nil {
 			return err
 		}

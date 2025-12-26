@@ -40,7 +40,7 @@ func (h *SecretHandler) SetSecret(ctx context.Context, req *proto.SetSecretReque
 
 	err = h.service.SetSecret(ctx, secret)
 	if err != nil {
-		log.Printf("SetSecret failed: %v", err)
+		log.Printf("Create failed: %v", err)
 		return nil, status.Error(codes.Internal, "failed to set secret, err: "+err.Error())
 	}
 
@@ -60,7 +60,7 @@ func (h *SecretHandler) GetSecret(ctx context.Context, req *proto.GetSecretReque
 
 	secret, err := h.service.GetSecret(ctx, userID, req.GetSecretId())
 	if err != nil {
-		log.Printf("GetSecret failed: %v", err)
+		log.Printf("GetByID failed: %v", err)
 		return nil, status.Error(codes.Internal, "failed to get secret")
 	}
 
@@ -85,7 +85,7 @@ func (h *SecretHandler) DeleteSecret(ctx context.Context, req *proto.DeleteSecre
 
 	err = h.service.DeleteSecret(ctx, userID, req.GetSecretId())
 	if err != nil && !errors.Is(err, postgres.ErrSecretNotFound) {
-		log.Printf("DeleteSecret failed: %v", err)
+		log.Printf("Delete failed: %v", err)
 		return nil, status.Error(codes.Internal, "failed to delete secret")
 	}
 
@@ -110,7 +110,7 @@ func (h *SecretHandler) ListSecrets(ctx context.Context, req *proto.ListSecretsR
 
 	secrets, err := h.service.ListSecrets(ctx, userID)
 	if err != nil {
-		log.Printf("ListSecrets failed: %v", err)
+		log.Printf("GetAll failed: %v", err)
 		return nil, status.Error(codes.Internal, "failed to retrieve secrets, err: "+err.Error())
 	}
 

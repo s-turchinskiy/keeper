@@ -29,7 +29,7 @@ func NewSecretRepository(postgreDB *PostgreDB) *SecretRepository {
 	}
 }
 
-func (r *SecretRepository) SetSecret(ctx context.Context, secret *models.Secret) error {
+func (r *SecretRepository) Create(ctx context.Context, secret *models.Secret) error {
 
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -87,7 +87,7 @@ func (r *SecretRepository) SetSecret(ctx context.Context, secret *models.Secret)
 	return err
 }
 
-func (r *SecretRepository) GetSecret(ctx context.Context, userID, secretID string) (*models.Secret, error) {
+func (r *SecretRepository) GetByID(ctx context.Context, userID, secretID string) (*models.Secret, error) {
 	query := `
 		SELECT s.name, s.user_id, s.data, s.hash, st.last_modified 
 		FROM keeper.secrets s
@@ -112,7 +112,7 @@ func (r *SecretRepository) GetSecret(ctx context.Context, userID, secretID strin
 	return &secret, nil
 }
 
-func (r *SecretRepository) DeleteSecret(ctx context.Context, userID, secretID string) error {
+func (r *SecretRepository) Delete(ctx context.Context, userID, secretID string) error {
 
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -165,7 +165,7 @@ func (r *SecretRepository) DeleteSecret(ctx context.Context, userID, secretID st
 	return err
 }
 
-func (r *SecretRepository) ListSecrets(ctx context.Context, userID string) ([]*models.Secret, error) {
+func (r *SecretRepository) GetAll(ctx context.Context, userID string) ([]*models.Secret, error) {
 
 	query := `
 		SELECT s.name, s.user_id, s.hash, st.last_modified
@@ -204,7 +204,7 @@ func (r *SecretRepository) ListSecrets(ctx context.Context, userID string) ([]*m
 	return secrets, nil
 }
 
-func (r *SecretRepository) ListSecretsWithStatuses(ctx context.Context, userID string) ([]*models.Secret, error) {
+func (r *SecretRepository) GetAllWithStatuses(ctx context.Context, userID string) ([]*models.Secret, error) {
 
 	query := `SELECT st.name, st.user_id, st.last_modified, st.status = 'DELETED', s.hash
 		FROM keeper.secrets_statuses st

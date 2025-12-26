@@ -2,11 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/s-turchinskiy/keeper/internal/client/models"
 	"io"
 	"log"
 )
+
+var ErrSecretAlreadyExist = errors.New("secret already exist")
 
 func (s *Service) Register(ctx context.Context, login, password string) error {
 
@@ -39,7 +42,7 @@ func (s *Service) Login(ctx context.Context, login, password string) error {
 
 func (s *Service) SyncSecrets(ctx context.Context) error {
 
-	localSecrets, err := s.storage.ListSecrets(ctx)
+	localSecrets, err := s.storage.GetAll(ctx)
 	if err != nil {
 		return err
 	}
@@ -67,7 +70,12 @@ func (s *Service) CreateSecret(ctx context.Context, base models.BaseSecret, data
 		return nil, err
 	}
 
-	_, err = s.storage.CreateSecret(ctx, secret)
+	_, err = s.storage.GetByKey(ctx, secret.Name)
+	if err == nil {
+		return nil, ErrSecretAlreadyExist
+	}
+
+	_, err = s.storage.Create(ctx, secret)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +90,7 @@ func (s *Service) CreateSecret(ctx context.Context, base models.BaseSecret, data
 
 func (s *Service) UpdateSecret(ctx context.Context, secret *models.LocalSecret) error {
 
-	_, err := s.storage.UpdateSecret(ctx, secret)
+	_, err := s.storage.UpdateByKey(ctx, secret.Name, secret)
 	if err != nil {
 		return err
 	}
@@ -93,20 +101,20 @@ func (s *Service) UpdateSecret(ctx context.Context, secret *models.LocalSecret) 
 
 func (s *Service) ReadSecret(ctx context.Context, secretID string) (*models.LocalSecret, error) {
 
-	//закомментировано для теста метода GetSecret сервера
-	/*secret, err := s.storage.GetSecret(ctx, secretID)
+	//закомментировано для теста метода GetByID сервера
+	secret, err := s.storage.GetByKey(ctx, secretID)
 	if err != nil {
 		return nil, err
-	}*/
+	}
 
-	secret, err := s.getSecretFromServer(ctx, secretID)
+	//secret, err := s.getSecretFromServer(ctx, secretID)
 
 	return secret, err
 }
 
 func (s *Service) ListLocalSecrets(ctx context.Context) ([]*models.LocalSecret, error) {
 
-	secrets, err := s.storage.ListSecrets(ctx)
+	secrets, err := s.storage.GetAll(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -114,19 +122,19 @@ func (s *Service) ListLocalSecrets(ctx context.Context) ([]*models.LocalSecret, 
 	return secrets, nil
 }
 
-func (s *Service) DeleteSecret(ctx context.Context, secretID string) (bool, error) {
+func (s *Service) DeleteSecret(ctx context.Context, secretID string) error {
 
-	ok, err := s.storage.DeleteSecret(ctx, secretID)
+	err := s.storage.DeleteByKey(ctx, secretID)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	err = s.grpcClient.DeleteSecret(ctx, secretID)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return ok, nil
+	return nil
 }
 
 func (s *Service) GetUpdatedSecrets(ctx context.Context) error {
@@ -157,7 +165,7 @@ func (s *Service) GetUpdatedSecrets(ctx context.Context) error {
 				}
 			} else {
 
-				localSecret, err := s.storage.GetSecret(ctx, secret.Id)
+				localSecret, err := s.storage.GetByKey(ctx, secret.Id)
 				if err != nil {
 					return nil
 				}

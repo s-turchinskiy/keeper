@@ -3,16 +3,22 @@ package mongodb
 import (
 	"context"
 	"fmt"
+	"github.com/s-turchinskiy/keeper/internal/client/models"
 	"github.com/s-turchinskiy/keeper/pkd/dbparse"
+	"github.com/s-turchinskiy/keeper/pkd/mongo_generic_repository"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const collectionName = "secrets"
+const (
+	collectionName = "secrets"
+	entityName     = "secret"
+	keyName        = "name"
+)
 
 type MongoDB struct {
-	client     *mongo.Client
-	collection *mongo.Collection
+	mongo_generic_repository.Repository[models.LocalSecret]
+	client *mongo.Client
 }
 
 func NewMongoDBStorage(ctx context.Context, mongoDBURL string) (db *MongoDB, err error) {
@@ -39,8 +45,12 @@ func NewMongoDBStorage(ctx context.Context, mongoDBURL string) (db *MongoDB, err
 	}
 
 	return &MongoDB{
-		client:     client,
-		collection: client.Database(parsedStr.DBName).Collection(collectionName),
+		client: client,
+		Repository: *mongo_generic_repository.NewRepository[models.LocalSecret](
+			client.Database(parsedStr.DBName).Collection(collectionName),
+			entityName,
+			keyName,
+		),
 	}, nil
 }
 

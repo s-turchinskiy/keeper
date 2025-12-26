@@ -27,7 +27,7 @@ func (s *Service) GetNewConnectionNumber(ctx context.Context) uint64 {
 
 func (s *Service) Register(ctx context.Context, login, password string) (*models.User, error) {
 
-	existing, _ := s.usersRepository.GetUserByLogin(ctx, login)
+	existing, _ := s.usersRepository.GetByLogin(ctx, login)
 	if existing != nil {
 		return nil, ErrUserAlreadyExists
 	}
@@ -37,7 +37,7 @@ func (s *Service) Register(ctx context.Context, login, password string) (*models
 		return nil, err
 	}
 
-	createdUser, err := s.usersRepository.CreateUser(ctx, login, string(passwordHash))
+	createdUser, err := s.usersRepository.Create(ctx, login, string(passwordHash))
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (s *Service) Register(ctx context.Context, login, password string) (*models
 }
 
 func (s *Service) Login(ctx context.Context, login, password string) (string, *models.User, error) {
-	user, err := s.usersRepository.GetUserByLogin(ctx, login)
+	user, err := s.usersRepository.GetByLogin(ctx, login)
 	if err != nil {
 		return "", nil, ErrUserNotFound
 	}
@@ -69,7 +69,7 @@ func (s *Service) SetSecret(ctx context.Context, secret *models.Secret) error {
 		return ErrSecretTooLarge
 	}
 
-	return s.secretRepository.SetSecret(ctx, secret)
+	return s.secretRepository.Create(ctx, secret)
 }
 
 func (s *Service) GetSecret(ctx context.Context, userID, secretID string) (*models.Secret, error) {
@@ -79,7 +79,7 @@ func (s *Service) GetSecret(ctx context.Context, userID, secretID string) (*mode
 		return secret, nil
 	}
 
-	secret, err := s.secretRepository.GetSecret(ctx, userID, secretID)
+	secret, err := s.secretRepository.GetByID(ctx, userID, secretID)
 
 	_ = s.redisClient.Set(ctx, secret)
 
@@ -87,18 +87,18 @@ func (s *Service) GetSecret(ctx context.Context, userID, secretID string) (*mode
 }
 
 func (s *Service) DeleteSecret(ctx context.Context, userID, secretID string) error {
-	return s.secretRepository.DeleteSecret(ctx, userID, secretID)
+	return s.secretRepository.Delete(ctx, userID, secretID)
 }
 
 func (s *Service) ListSecrets(ctx context.Context, userID string) ([]*models.Secret, error) {
-	return s.secretRepository.ListSecrets(ctx, userID)
+	return s.secretRepository.GetAll(ctx, userID)
 }
 
 func (s *Service) SyncFromClient(ctx context.Context, userID string, clientSecrets []*models.Secret) ([]*models.Secret, error) {
 
 	var updateInClients []*models.Secret
 
-	serverSecrets, err := s.secretRepository.ListSecretsWithStatuses(ctx, userID)
+	serverSecrets, err := s.secretRepository.GetAllWithStatuses(ctx, userID)
 	if err != nil {
 		return nil, errorsutils.WrapError(err)
 	}
@@ -146,7 +146,7 @@ func (s *Service) SyncFromClient(ctx context.Context, userID string, clientSecre
 
 		case scrt.serverSecret == nil:
 
-			err = s.secretRepository.SetSecret(ctx, scrt.clientSecret)
+			err = s.secretRepository.Create(ctx, scrt.clientSecret)
 			if err != nil {
 				return updateInClients, errorsutils.WrapError(err)
 			}
@@ -155,13 +155,13 @@ func (s *Service) SyncFromClient(ctx context.Context, userID string, clientSecre
 		case scrt.clientSecret.LastModified.After(scrt.serverSecret.LastModified):
 
 			if scrt.clientSecret.Deleted {
-				err = s.secretRepository.DeleteSecret(ctx, scrt.clientSecret.UserID, scrt.clientSecret.ID)
+				err = s.secretRepository.Delete(ctx, scrt.clientSecret.UserID, scrt.clientSecret.ID)
 				if err != nil {
 					return updateInClients, errorsutils.WrapError(err)
 				}
 
 			} else {
-				err = s.secretRepository.SetSecret(ctx, scrt.clientSecret)
+				err = s.secretRepository.Create(ctx, scrt.clientSecret)
 				if err != nil {
 					return updateInClients, errorsutils.WrapError(err)
 				}
@@ -176,7 +176,7 @@ func (s *Service) SyncFromClient(ctx context.Context, userID string, clientSecre
 		}
 
 		if register {
-			updatedSecret, err := s.secretRepository.GetSecret(ctx, scrt.clientSecret.UserID, scrt.clientSecret.ID)
+			updatedSecret, err := s.secretRepository.GetByID(ctx, scrt.clientSecret.UserID, scrt.clientSecret.ID)
 			if err != nil {
 				return updateInClients, errorsutils.WrapError(err)
 			}

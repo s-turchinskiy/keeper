@@ -74,7 +74,7 @@ func testService() {
 		{
 			base: models.BaseSecret{
 				Type: models.SecretTypeText,
-				Name: "Secret1",
+				Name: "Secret only creating",
 			},
 
 			data: models.TextData{
@@ -84,7 +84,7 @@ func testService() {
 		{
 			base: models.BaseSecret{
 				Type: models.SecretTypeText,
-				Name: "Secret4",
+				Name: "Secret for deleting",
 			},
 
 			data: models.TextData{
@@ -94,7 +94,7 @@ func testService() {
 		{
 			base: models.BaseSecret{
 				Type: models.SecretTypeText,
-				Name: "Secret3",
+				Name: "Secret for updating",
 			},
 
 			data: models.TextData{
@@ -104,34 +104,34 @@ func testService() {
 	}
 	for _, secret := range secrets {
 		if _, err = srvc.CreateSecret(ctx, secret.base, secret.data); err != nil {
-			fmt.Println("SetSecret failed:", err)
+			fmt.Printf("Create failed secret %s: %v\n", secret.base.Name, err)
 		}
 	}
 
-	secret4, err := srvc.ReadSecret(ctx, "Secret4")
+	secretForUpdating, err := srvc.ReadSecret(ctx, "Secret for updating")
 	if err != nil {
 		log.Fatal("ReadSecret failed:", err)
 	}
 
-	secret4.Metadata = "updated"
-	err = srvc.UpdateSecret(ctx, secret4)
+	secretForUpdating.Metadata = "updated"
+	err = srvc.UpdateSecret(ctx, secretForUpdating)
 	if err != nil {
-		log.Fatal("UpdateSecret failed:", err)
+		log.Fatal("Update failed:", err)
 	}
 
-	ok, err := srvc.DeleteSecret(ctx, "secret1")
-	if ok {
-		log.Fatal("DeleteSecret failed:", err)
+	err = srvc.DeleteSecret(ctx, "Secret for deleting")
+	if err != nil {
+		log.Fatal("Delete failed:", err)
 	}
 
-	ok, err = srvc.DeleteSecret(ctx, "Secret1")
-	if !ok || err != nil {
-		log.Fatal("DeleteSecret failed:", err)
+	err = srvc.DeleteSecret(ctx, "Secret for deleting")
+	if err == nil {
+		log.Fatal("Delete failed: err must != nil")
 	}
 
 	remoteSecrets, err := srvc.ListLocalSecrets(ctx)
 	if err != nil {
-		log.Fatal("ListSecrets failed:", err)
+		log.Fatal("GetAll failed:", err)
 	}
 
 	fmt.Printf("Found %d secrets:\n", len(remoteSecrets))
@@ -141,7 +141,7 @@ func testService() {
 
 	//TODO: возможно надо подождать пока стрим отработает
 	//TODO: но вообще нет, сначала отработывает для 1 и 4, аотом только для 4, потом ни для какого. всегда так и непонятно почему, где-то непонятная ошибка
-	time.Sleep(5 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	_ = srvc.Close(ctx)
 
@@ -210,17 +210,17 @@ func testGRPCClient() {
 
 	for _, secret := range secrets {
 		if err := grpcClient.SetSecret(ctx, secret); err != nil {
-			log.Fatal("SetSecret failed:", err)
+			log.Fatal("Create failed:", err)
 		}
 	}
 
 	if err = grpcClient.DeleteSecret(ctx, "Client1"); err != nil {
-		log.Fatal("DeleteSecret failed:", err)
+		log.Fatal("Delete failed:", err)
 	}
 
 	remoteSecrets, err := grpcClient.ListSecrets(ctx)
 	if err != nil {
-		log.Fatal("ListSecrets failed:", err)
+		log.Fatal("GetAll failed:", err)
 	}
 
 	fmt.Printf("Found %d secrets:\n", len(remoteSecrets))
