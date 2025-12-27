@@ -24,7 +24,8 @@ type App struct {
 }
 
 func NewApp() (*App, error) {
-	cfg, err := config.LoadCfg()
+
+	cfg, err := config.LoadCfg(config.WithDB())
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +44,7 @@ func NewApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	srvc := service.NewService(ctx, cryptor, repository, grpcClient)
+	srvc := service.NewService(ctx, repository, grpcClient, service.WithCrypto(cryptor))
 	app := &App{
 		cfg:     cfg,
 		cmd:     cmds.New(srvc),

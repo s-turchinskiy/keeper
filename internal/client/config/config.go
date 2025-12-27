@@ -5,6 +5,8 @@ import (
 	"os"
 )
 
+type OptionConfig func(*Config) error
+
 type Config struct {
 	DBURL         string
 	Login         string
@@ -12,11 +14,7 @@ type Config struct {
 	ServerAddress string
 }
 
-func LoadCfg() (*Config, error) {
-	dbURL := os.Getenv("KEEPER_DB_URL")
-	if dbURL == "" {
-		return nil, fmt.Errorf("KEEPER_DB_URL environment variable is required")
-	}
+func LoadCfg(opts ...OptionConfig) (*Config, error) {
 
 	login := os.Getenv("KEEPER_LOGIN")
 	if login == "" {
@@ -28,15 +26,39 @@ func LoadCfg() (*Config, error) {
 		return nil, fmt.Errorf("KEEPER_PASSWORD environment variable is required")
 	}
 
-	serverAddres := os.Getenv("KEEPER_SERVER_GRPC_ADDR")
-	if serverAddres == "" {
+	serverAddress := os.Getenv("KEEPER_SERVER_GRPC_ADDR")
+	if serverAddress == "" {
 		return nil, fmt.Errorf("KEEPER_SERVER_GRPC_ADDR environment variable is required")
 	}
 
-	return &Config{
-		DBURL:         dbURL,
+	cfg := &Config{
 		Login:         login,
 		Password:      password,
-		ServerAddress: serverAddres,
-	}, nil
+		ServerAddress: serverAddress,
+	}
+
+	for _, opt := range opts {
+		err := opt(cfg)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return cfg, nil
+}
+
+func WithDB() OptionConfig {
+
+	return func(c *Config) error {
+
+		dbURL := os.Getenv("KEEPER_DB_URL")
+		if dbURL == "" {
+			return fmt.Errorf("KEEPER_DB_URL environment variable is required")
+		}
+
+		c.DBURL = dbURL
+
+		return nil
+
+	}
 }

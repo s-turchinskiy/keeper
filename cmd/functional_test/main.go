@@ -23,7 +23,7 @@ func main() {
 func testService() {
 
 	_ = godotenv.Load("./cmd/client/.env")
-	cfg, err := config.LoadCfg()
+	cfg, err := config.LoadCfg(config.WithDB())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,7 +50,7 @@ func testService() {
 		log.Fatal(err)
 	}
 
-	srvc := service.NewService(ctx, cryptor, repository, grpcClient)
+	srvc := service.NewService(ctx, repository, grpcClient, service.WithCrypto(cryptor))
 
 	fmt.Println("=== Auth ===")
 

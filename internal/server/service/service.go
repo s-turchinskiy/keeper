@@ -33,8 +33,7 @@ type Service struct {
 	usersRepository         repository.UserRepositorier
 	secretRepository        repository.SecretRepositorier
 	currentConnectionNumber uint64
-
-	redisClient *redisclient.RedisClient
+	redisClient             *redisclient.RedisClient
 }
 
 func NewService(tokenManager token.TokenManager,

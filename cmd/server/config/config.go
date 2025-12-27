@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type OptionConfig func(*Config)
+type OptionConfig func(*Config) error
 
 type Config struct {
 	DBURL string //Путь к базе данных
@@ -38,38 +38,55 @@ func LoadCfg(opts ...OptionConfig) (*Config, error) {
 		return nil, fmt.Errorf("KEEPER_GRPC_ADDR environment variable is required")
 	}
 
-	jwtSecret := os.Getenv("KEEPER_JWT_SECRET")
-	if jwtSecret == "" {
-		return nil, fmt.Errorf("KEEPER_JWT_SECRET environment variable is required")
-	}
-
-	jwtDuration := 3600
-	jwtDurationStr := os.Getenv("KEEPER_JWT_DURATION_SEC")
-	if jwtDurationStr == "" {
-		return nil, fmt.Errorf("KEEPER_JWT_SECRET environment variable is required")
-	}
-
 	cfg := &Config{
-		DBURL:       dbURL,
-		JWTSecret:   jwtSecret,
-		JWTDuration: time.Duration(jwtDuration) * time.Second,
-		GrpcAddr:    grpcAddr,
+		DBURL:    dbURL,
+		GrpcAddr: grpcAddr,
 	}
 
 	for _, opt := range opts {
-		opt(cfg)
+		err := opt(cfg)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return cfg, nil
 }
 
+func WithJWT() OptionConfig {
+
+	return func(c *Config) error {
+
+		jwtSecret := os.Getenv("KEEPER_JWT_SECRET")
+		if jwtSecret == "" {
+			return fmt.Errorf("KEEPER_JWT_SECRET environment variable is required")
+		}
+
+		c.JWTSecret = jwtSecret
+
+		jwtDuration := 3600
+		jwtDurationStr := os.Getenv("KEEPER_JWT_DURATION_SEC")
+		if jwtDurationStr == "" {
+			return fmt.Errorf("KEEPER_JWT_SECRET environment variable is required")
+		}
+
+		c.JWTDuration = time.Duration(jwtDuration) * time.Second
+
+		return nil
+
+	}
+}
+
 func WithRedis() OptionConfig {
 
-	return func(c *Config) {
+	return func(c *Config) error {
 
-		if value := os.Getenv("KEEPER_REDIS_ADDR"); value != "" {
-			c.RedisAddr = value
+		addr := os.Getenv("KEEPER_REDIS_ADDR")
+		if addr == "" {
+			return fmt.Errorf("KEEPER_REDIS_ADDR environment variable is required")
 		}
+
+		c.RedisAddr = addr
 
 		if value := os.Getenv("KEEPER_REDIS_PASSWORD"); value != "" {
 			c.RedisPassword = value
@@ -92,6 +109,8 @@ func WithRedis() OptionConfig {
 				log.Println(errorsutils.WrapError(err))
 			}
 		}
+
+		return nil
 
 	}
 }

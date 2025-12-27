@@ -2,13 +2,14 @@ package service
 
 import (
 	"context"
-	"log"
-	"sync"
-
 	"github.com/s-turchinskiy/keeper/internal/client/crypto"
 	"github.com/s-turchinskiy/keeper/internal/client/grpcclient"
 	"github.com/s-turchinskiy/keeper/internal/client/repository"
+	"log"
+	"sync"
 )
+
+type OptionService func(*Service)
 
 type Service struct {
 	cryptor crypto.Cryptor
@@ -19,14 +20,25 @@ type Service struct {
 	grpcClient grpcclient.SenderReceiver
 }
 
-func NewService(ctx context.Context, cryptor crypto.Cryptor, storage repository.Repositorier, grpcClient *grpcclient.GRPCClient) *Service {
+func NewService(ctx context.Context, storage repository.Repositorier, grpcClient *grpcclient.GRPCClient, opts ...OptionService) *Service {
 	service := &Service{
-		cryptor:    cryptor,
 		storage:    storage,
 		grpcClient: grpcClient,
 	}
 
+	for _, opt := range opts {
+		opt(service)
+	}
+
 	return service
+}
+
+func WithCrypto(cryptor crypto.Cryptor) OptionService {
+
+	return func(s *Service) {
+
+		s.cryptor = cryptor
+	}
 }
 
 func (s *Service) Close(ctx context.Context) error {
