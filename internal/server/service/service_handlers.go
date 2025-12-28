@@ -145,7 +145,13 @@ func (s *Service) SyncFromClient(ctx context.Context, userID string, clientSecre
 	for _, scrt := range comparisonMap {
 		scrt := scrt
 		grp.Go(func() error {
-			return s.addInUpdateInClients(ctx, scrt, updateInClients, mutex)
+			secretForClient, err := s.syncSecret(ctx, scrt)
+			if err == nil && secretForClient != nil {
+				mutex.Lock()
+				defer mutex.Unlock()
+				updateInClients = append(updateInClients, secretForClient)
+			}
+			return err
 		})
 	}
 
@@ -156,27 +162,24 @@ func (s *Service) SyncFromClient(ctx context.Context, userID string, clientSecre
 	return updateInClients, nil
 }
 
-func (s *Service) addInUpdateInClients(ctx context.Context, scrt *secretsType, updateInClients []*models.Secret, mutex *sync.Mutex) error {
+func (s *Service) syncSecret(ctx context.Context, scrt *secretsType) (*models.Secret, error) {
 
 	switch {
 	case (scrt.serverSecret == nil && scrt.clientSecret.Deleted) ||
 		(scrt.clientSecret == nil && scrt.serverSecret.Deleted) ||
 		scrt.clientSecret.LastModified.Equal(scrt.serverSecret.LastModified):
 
-		return nil
+		return nil, nil
 
 	case scrt.clientSecret == nil:
 
-		mutex.Lock()
-		defer mutex.Unlock()
-		updateInClients = append(updateInClients, scrt.serverSecret)
-		return nil
+		return scrt.serverSecret, nil
 
 	case scrt.serverSecret == nil:
 
 		err := s.secretRepository.CreateUpdate(ctx, scrt.clientSecret)
 		if err != nil {
-			return errorsutils.WrapError(err)
+			return nil, errorsutils.WrapError(err)
 		}
 
 	case scrt.clientSecret.LastModified.After(scrt.serverSecret.LastModified):
@@ -184,33 +187,28 @@ func (s *Service) addInUpdateInClients(ctx context.Context, scrt *secretsType, u
 		if scrt.clientSecret.Deleted {
 			err := s.secretRepository.Delete(ctx, scrt.clientSecret.UserID, scrt.clientSecret.ID)
 			if err != nil {
-				return errorsutils.WrapError(err)
+				return nil, errorsutils.WrapError(err)
 			}
 
 		} else {
 			err := s.secretRepository.CreateUpdate(ctx, scrt.clientSecret)
 			if err != nil {
-				return errorsutils.WrapError(err)
+				return nil, errorsutils.WrapError(err)
 			}
 		}
 
 	case scrt.serverSecret.LastModified.After(scrt.clientSecret.LastModified):
-		mutex.Lock()
-		defer mutex.Unlock()
-		updateInClients = append(updateInClients, scrt.serverSecret)
-		return nil
+
+		return scrt.serverSecret, nil
 	default:
 		log.Println(ErrUnknownTypeOperation, "server secret:", scrt.serverSecret, "client secret:", scrt.clientSecret)
-		return errorsutils.WrapError(ErrUnknownTypeOperation)
+		return nil, errorsutils.WrapError(ErrUnknownTypeOperation)
 	}
 
 	updatedSecret, err := s.secretRepository.GetByID(ctx, scrt.clientSecret.UserID, scrt.clientSecret.ID)
 	if err != nil {
-		return errorsutils.WrapError(err)
+		return nil, errorsutils.WrapError(err)
 	}
 
-	mutex.Lock()
-	defer mutex.Unlock()
-	updateInClients = append(updateInClients, updatedSecret)
-	return nil
+	return updatedSecret, nil
 }
