@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/s-turchinskiy/keeper/internal/client/models"
-	"github.com/s-turchinskiy/keeper/internal/utils/errorsutils"
+	"golang.org/x/sync/errgroup"
 	"io"
 	"log"
 	"strconv"
@@ -164,41 +164,16 @@ func (s *Service) GetUpdatedSecrets(ctx context.Context) error {
 			break
 		}
 
+		grp, ctx := errgroup.WithContext(ctx)
 		for _, secret := range resp.Secrets {
-			if *secret.Deleted {
+			secret := secret
+			grp.Go(func() error {
+				return s.syncLocalSecret(ctx, secret, connNumber)
+			})
+		}
 
-				fmt.Printf("conn %s. GetUpdatedSecrets start deleting secret \"%s\"\n", connNumber, secret.Id)
-				err = s.deleteLocalSecret(ctx, secret.Id)
-				fmt.Printf("conn %s. GetUpdatedSecrets end deleting secret \"%s\"\n", connNumber, secret.Id)
-				if err != nil {
-					return nil
-				}
-
-			} else {
-
-				fmt.Printf("conn %s. GetUpdatedSecrets start updating secret \"%s\"\n", connNumber, secret.Id)
-
-				localSecret, err := s.storage.GetByKey(ctx, secret.Id)
-				if err != nil {
-					fmt.Printf("conn %s. GetUpdatedSecrets end updating secret \"%s\", error: %v\n",
-						connNumber, secret.Id, errorsutils.WrapError(err))
-					return nil
-				}
-
-				remoteSecret := models.ConvertProtoSecretToRemoteSecret(secret)
-				if localSecret.LastModified.Before(remoteSecret.LastModified) {
-					err = s.replaceLocalSecret(ctx, remoteSecret)
-					if err != nil {
-						fmt.Printf("conn %s. GetUpdatedSecrets end updating secret \"%s\", error: %v\n",
-							connNumber, secret.Id, errorsutils.WrapError(err))
-						return nil
-					} else {
-						fmt.Printf("conn %s. GetUpdatedSecrets end updating secret \"%s\", success\n", connNumber, secret.Id)
-					}
-				} else {
-					fmt.Printf("conn %s. GetUpdatedSecrets end updating secret \"%s\", LastModified equal\n", connNumber, secret.Id)
-				}
-			}
+		if err = grp.Wait(); err != nil {
+			return err
 		}
 
 		fmt.Printf("conn %s. GetUpdatedSecrets end getting secrets\n", connNumber)
