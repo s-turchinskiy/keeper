@@ -143,7 +143,7 @@ func (r *Repository[T]) DeleteByKey(ctx context.Context, keyValue string) error 
 		return err
 	}
 
-	if result.DeletedCount == 1 {
+	if result.DeletedCount != 1 {
 		return NewEntityNotFoundError(r.entityName, keyValue)
 	}
 
@@ -161,4 +161,10 @@ func (r *Repository[T]) CountByID(ctx context.Context, id string) (int64, error)
 	}
 
 	return count, nil
+}
+
+func (r *Repository[T]) DeleteAll(ctx context.Context) error {
+
+	_, err := r.collection.DeleteMany(ctx, bson.M{})
+	return err
 }

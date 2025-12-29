@@ -125,12 +125,7 @@ func (s *Service) ListLocalSecrets(ctx context.Context) ([]*models.LocalSecret, 
 
 func (s *Service) DeleteSecret(ctx context.Context, secretID string) error {
 
-	err := s.storage.DeleteByKey(ctx, secretID)
-	if err != nil {
-		return err
-	}
-
-	err = s.deleteLocalSecret(ctx, secretID)
+	err := s.deleteLocalSecret(ctx, secretID)
 	if err != nil {
 		return err
 	}

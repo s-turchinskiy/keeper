@@ -6,16 +6,12 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/s-turchinskiy/keeper/internal/client/grpcclient"
 	clientmodels "github.com/s-turchinskiy/keeper/internal/client/models"
-	grpcserver "github.com/s-turchinskiy/keeper/internal/server/grpc"
 	servermodels "github.com/s-turchinskiy/keeper/internal/server/models"
 	"github.com/s-turchinskiy/keeper/internal/server/repository"
 	mockserverrepository "github.com/s-turchinskiy/keeper/internal/server/repository/mock"
-	"github.com/s-turchinskiy/keeper/internal/server/service"
-	"github.com/s-turchinskiy/keeper/internal/server/token"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/test/bufconn"
 	"log"
 	"testing"
 	"time"
@@ -23,21 +19,7 @@ import (
 
 func FunctionalTestGRPC(t *testing.T, usersRepository repository.UserRepositorier, secretRepository repository.SecretRepositorier, debug bool) {
 
-	lis = bufconn.Listen(bufSize)
-
-	jwtManager := token.NewJWTManager("secret", time.Minute)
-	srvc := service.NewService(
-		jwtManager,
-		usersRepository,
-		secretRepository,
-	)
-	grpcServer := grpcserver.NewGrpcServer(srvc)
-
-	go func() {
-		if err := grpcServer.Serve(lis); err != nil {
-			log.Fatalf("Server exited with error: %v", err)
-		}
-	}()
+	runGRPCServer(usersRepository, secretRepository)
 
 	ctx := context.Background()
 	if !debug {

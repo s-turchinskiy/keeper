@@ -11,6 +11,7 @@ type Repositorier interface {
 	GetByKey(ctx context.Context, id string) (*models.LocalSecret, error)
 	UpdateByKey(ctx context.Context, id string, secret *models.LocalSecret) (*models.LocalSecret, error)
 	DeleteByKey(ctx context.Context, id string) error
+	DeleteAll(ctx context.Context) error
 
 	Close(ctx context.Context) error
 }

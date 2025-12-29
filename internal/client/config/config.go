@@ -51,9 +51,9 @@ func WithDB() OptionConfig {
 
 	return func(c *Config) error {
 
-		dbURL := os.Getenv("KEEPER_DB_URL")
+		dbURL := os.Getenv("KEEPER_CLIENT_DB_URL")
 		if dbURL == "" {
-			return fmt.Errorf("KEEPER_DB_URL environment variable is required")
+			return fmt.Errorf("KEEPER_CLIENT_DB_URL environment variable is required")
 		}
 
 		c.DBURL = dbURL
