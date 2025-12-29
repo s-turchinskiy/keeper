@@ -32,9 +32,7 @@ func NewGRPCClient(ctx context.Context, serverAddress string, login string, pass
 	}
 
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	for _, extraOpt := range extraOpts {
-		opts = append(opts, extraOpt)
-	}
+	opts = append(opts, extraOpts...)
 
 	conn, err := grpc.NewClient(serverAddress, opts...)
 	if err != nil {
