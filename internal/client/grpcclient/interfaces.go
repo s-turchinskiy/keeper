@@ -9,7 +9,6 @@ import (
 )
 
 type SenderReceiver interface {
-	Connect(ctx context.Context) error
 	Close() error
 
 	GetConnectionNumber(ctx context.Context) (uint64, error)

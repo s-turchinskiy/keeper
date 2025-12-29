@@ -6,21 +6,7 @@ import (
 	"github.com/s-turchinskiy/keeper/internal/utils/errorsutils"
 	"github.com/s-turchinskiy/keeper/models/proto"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
-
-func (c *GRPCClient) Connect(ctx context.Context) error {
-	conn, err := grpc.NewClient(c.serverAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return err
-	}
-
-	c.conn = conn
-	c.authClient = proto.NewAuthServiceClient(conn)
-	c.secretClient = proto.NewSecretServiceClient(conn)
-
-	return nil
-}
 
 func (c *GRPCClient) Close() error {
 	if c.conn != nil {
@@ -57,11 +43,7 @@ func (c *GRPCClient) Login(ctx context.Context, login, password string) error {
 
 	c.token = resp.GetToken()
 
-	err = c.withAuthRetry(c.withConnNumber(ctx), func(authCtx context.Context) error {
-		c.stream, err = c.secretClient.GetUpdatedSecrets(authCtx, &proto.GetUpdatedSecretsRequest{})
-		return errorsutils.WrapError(err)
-	})
-
+	err = c.setStream(ctx)
 	if err != nil {
 		return errorsutils.WrapError(err)
 	}

@@ -20,4 +20,5 @@ type SecretRepositorier interface {
 	Delete(ctx context.Context, userID, secretID string) error
 	GetAll(ctx context.Context, userID string) ([]*models.Secret, error)
 	GetAllWithStatuses(ctx context.Context, userID string) ([]*models.Secret, error)
+	TruncateAllTabs(ctx context.Context) error
 }

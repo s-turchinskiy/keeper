@@ -240,3 +240,38 @@ func (r *SecretRepository) GetAllWithStatuses(ctx context.Context, userID string
 	}
 	return secrets, nil
 }
+
+func (r *SecretRepository) TruncateAllTabs(ctx context.Context) error {
+
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func(tx *sql.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(tx)
+
+	query1 := `TRUNCATE TABLE keeper.secrets_statuses`
+	query2 := `TRUNCATE TABLE keeper.secrets`
+
+	_, err = r.db.ExecContext(ctx, query1)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.ExecContext(ctx, query2)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return err
+
+}

@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/s-turchinskiy/keeper/cmd/server/config"
+	"github.com/s-turchinskiy/keeper/internal/server/config"
 	"log"
 
 	"github.com/joho/godotenv"

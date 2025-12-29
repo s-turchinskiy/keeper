@@ -115,7 +115,8 @@ func (h *SecretHandler) DeleteSecret(ctx context.Context, req *proto.DeleteSecre
 	resp.Success = true
 
 	secret, err := h.service.GetSecret(ctx, userID, req.GetSecretId())
-	if err == nil {
+	//TODO: выше должен возвращаться секрет всегда, но со статусом - deleting, пока заглушка
+	if err == nil && secret != nil {
 		h.secretsForClientsCh <- []*models.Secret{secret}
 	} else {
 		log.Printf("error send deleted secret in clients, user id: %s, name: %s, error : %v", userID, req.GetSecretId(), err)
@@ -178,9 +179,7 @@ func (h *SecretHandler) SyncSecretsFromClient(ctx context.Context, req *proto.Sy
 func (h *SecretHandler) GetUpdatedSecrets(req *proto.GetUpdatedSecretsRequest, g grpc.ServerStreamingServer[proto.GetUpdatedSecretsResponse]) error {
 
 	//надо бы прерывать, но контекста когда stream нет
-
 	//TODO: надо сделать проверку на userID, отправлять только на подключенные под именно этим юзером клиенты
-
 	//TODO: это все работает ненадежно, то клиент получает данные стрима, то нет и непонятно почему
 	for secretsForClients := range h.secretsForClientsCh {
 

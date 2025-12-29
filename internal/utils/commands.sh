@@ -3,6 +3,12 @@ cd /home/stanislav/go/keeper && export PATH=$PATH:$(go env GOPATH)/bin &&
   --go-grpc_out=. --go-grpc_opt=paths=source_relative \
   models/proto/api.proto
 
+mockgen -destination=internal/server/repository/mock/mock_user_repository.go -package=mockserverrepository github.com/s-turchinskiy/keeper/internal/server/repository UserRepositorier
+mockgen -destination=internal/server/repository/mock/mock_secret_repository.go -package=mockserverrepository github.com/s-turchinskiy/keeper/internal/server/repository SecretRepositorier
+mockgen -destination=internal/client/repository/mock/mock.go -package=mocksclientrepository github.com/s-turchinskiy/keeper/internal/client/repository Repositorier
+
+cd /home/stanislav/go/keeper && go test -v -coverpkg=./... -coverprofile=coverage.html ./...
+
 #https://mongodb.prakticum-team.ru/try/download/community-edition/releases
 #https://www.mongodb.com/try/download/shell
 #https://arenda-server.cloud/blog/ustanovka-mongodb-na-ubuntu-24/

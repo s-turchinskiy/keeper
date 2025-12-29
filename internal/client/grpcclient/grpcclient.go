@@ -5,6 +5,7 @@ import (
 	"github.com/s-turchinskiy/keeper/internal/utils/errorsutils"
 	"github.com/s-turchinskiy/keeper/models/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type GRPCClient struct {
@@ -22,7 +23,7 @@ type GRPCClient struct {
 	token            string
 }
 
-func NewGRPCClient(ctx context.Context, serverAddress string, login string, password string) (*GRPCClient, error) {
+func NewGRPCClient(ctx context.Context, serverAddress string, login string, password string, extraOpts ...grpc.DialOption) (*GRPCClient, error) {
 
 	grpcClient := &GRPCClient{
 		serverAddress: serverAddress,
@@ -30,10 +31,19 @@ func NewGRPCClient(ctx context.Context, serverAddress string, login string, pass
 		password:      password,
 	}
 
-	err := grpcClient.Connect(ctx)
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	for _, extraOpt := range extraOpts {
+		opts = append(opts, extraOpt)
+	}
+
+	conn, err := grpc.NewClient(serverAddress, opts...)
 	if err != nil {
 		return nil, errorsutils.WrapError(err)
 	}
+
+	grpcClient.conn = conn
+	grpcClient.authClient = proto.NewAuthServiceClient(conn)
+	grpcClient.secretClient = proto.NewSecretServiceClient(conn)
 
 	grpcClient.connectionNumber, err = grpcClient.GetConnectionNumber(ctx)
 	if err != nil {

@@ -2,6 +2,8 @@ package grpcclient
 
 import (
 	"context"
+	"github.com/s-turchinskiy/keeper/internal/utils/errorsutils"
+	"github.com/s-turchinskiy/keeper/models/proto"
 	"google.golang.org/grpc/metadata"
 	"strconv"
 )
@@ -63,4 +65,12 @@ func (c *GRPCClient) withConnNumber(ctx context.Context) context.Context {
 	return metadata.NewOutgoingContext(ctx,
 		metadata.Pairs("connectionnumber", strconv.FormatUint(c.connectionNumber, 10)),
 	)
+}
+
+func (c *GRPCClient) setStream(ctx context.Context) error {
+	return c.withAuthRetry(c.withConnNumber(ctx), func(authCtx context.Context) error {
+		var err error
+		c.stream, err = c.secretClient.GetUpdatedSecrets(authCtx, &proto.GetUpdatedSecretsRequest{})
+		return errorsutils.WrapError(err)
+	})
 }

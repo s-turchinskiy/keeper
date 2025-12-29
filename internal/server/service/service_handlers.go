@@ -81,14 +81,18 @@ func (s *Service) CreateSecret(ctx context.Context, secret *models.Secret) error
 
 func (s *Service) GetSecret(ctx context.Context, userID, secretID string) (*models.Secret, error) {
 
-	secret, _ := s.redisClient.Get(ctx, userID, secretID)
-	if secret != nil {
-		return secret, nil
+	if s.redisClient != nil {
+		secret, _ := s.redisClient.Get(ctx, userID, secretID)
+		if secret != nil {
+			return secret, nil
+		}
 	}
 
 	secret, err := s.secretRepository.GetByID(ctx, userID, secretID)
 
-	_ = s.redisClient.Set(ctx, secret)
+	if s.redisClient != nil {
+		_ = s.redisClient.Set(ctx, secret)
+	}
 
 	return secret, err
 }

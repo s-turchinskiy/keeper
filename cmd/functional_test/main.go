@@ -7,19 +7,43 @@ import (
 	"github.com/s-turchinskiy/keeper/internal/client/grpcclient"
 	"github.com/s-turchinskiy/keeper/internal/client/repository/mongodb"
 	"github.com/s-turchinskiy/keeper/internal/client/service"
+	"github.com/s-turchinskiy/keeper/internal/functional_tests"
+	"github.com/s-turchinskiy/keeper/internal/server/repository/postgres"
 	"log"
+	"testing"
 	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/s-turchinskiy/keeper/internal/client/config"
 	"github.com/s-turchinskiy/keeper/internal/client/models"
+	serverconfig "github.com/s-turchinskiy/keeper/internal/server/config"
 )
 
 func main() {
-	//testGRPCClient()
-	testService()
+
+	ctx := context.Background()
+	_ = godotenv.Load("./cmd/server/.env")
+	cfg, err := serverconfig.LoadCfg()
+	if err != nil {
+		log.Fatal(err)
+	}
+	db, err := postgres.NewPostgresStorage(ctx, cfg.DBURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	secretRepository := postgres.NewSecretRepository(db)
+	err = secretRepository.TruncateAllTabs(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	functional_tests.FunctionalTestGRPC(&testing.T{}, postgres.NewUserRepository(db),
+		secretRepository, true)
+	//testService()
 }
 
+// nolint func testGRPCClient()
 func testService() {
 
 	_ = godotenv.Load("./cmd/client/.env")
@@ -148,84 +172,3 @@ func testService() {
 }
 
 // nolint func testGRPCClient()
-func testGRPCClient() {
-
-	_ = godotenv.Load("./cmd/client/.env")
-	cfg, err := config.LoadCfg()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	ctx := context.Background()
-	grpcClient, err := grpcclient.NewGRPCClient(ctx, cfg.ServerAddress, cfg.Login, cfg.Password)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer func() {
-		if err := grpcClient.Close(); err != nil {
-			log.Printf("Error closing client: %v", err)
-		}
-	}()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := grpcClient.Connect(ctx); err != nil {
-		log.Fatal("Connect failed:", err)
-	}
-
-	fmt.Println("=== Auth ===")
-	if _, err := grpcClient.Register(ctx, cfg.Password, cfg.Login); err != nil {
-		log.Printf("Register failed: %v", err)
-	}
-
-	if err := grpcClient.Login(ctx, cfg.Password, cfg.Login); err != nil {
-		log.Fatal("Login failed:", err)
-	}
-	fmt.Println("Login successfully")
-
-	fmt.Println("\n=== Secrets ===")
-
-	secrets := []*models.RemoteSecret{
-		{
-			Name:         "Secret1",
-			LastModified: time.Now(),
-			Hash:         "hash",
-			Data:         []byte("data"),
-		},
-		{
-			Name:         "Secret2",
-			LastModified: time.Now(),
-			Hash:         "hash",
-			Data:         []byte("data"),
-		},
-		{
-			Name:         "Secret3",
-			LastModified: time.Now(),
-			Hash:         "hash",
-			Data:         []byte("data"),
-		},
-	}
-
-	for _, secret := range secrets {
-		if err := grpcClient.SetSecret(ctx, secret); err != nil {
-			log.Fatal("CreateUpdate failed:", err)
-		}
-	}
-
-	if err = grpcClient.DeleteSecret(ctx, "Client1"); err != nil {
-		log.Fatal("Delete failed:", err)
-	}
-
-	remoteSecrets, err := grpcClient.ListSecrets(ctx)
-	if err != nil {
-		log.Fatal("GetAll failed:", err)
-	}
-
-	fmt.Printf("Found %d secrets:\n", len(remoteSecrets))
-	for i, secret := range remoteSecrets {
-		fmt.Printf("%d. %s (hash: %s)\n", i+1, secret.Name, secret.Hash)
-	}
-
-}

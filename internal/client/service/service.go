@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/s-turchinskiy/keeper/internal/client/crypto"
 	"github.com/s-turchinskiy/keeper/internal/client/grpcclient"
 	"github.com/s-turchinskiy/keeper/internal/client/repository"
@@ -48,12 +49,18 @@ func (s *Service) Close(ctx context.Context) error {
 	if s.storage != nil {
 		if err := s.storage.Close(ctx); err != nil {
 			log.Printf("failed to close repository: %v", err)
+		} else {
+			fmt.Println("repository closed success")
 		}
 	}
 
 	if s.grpcClient != nil {
+
+		_ = s.grpcClient.GetStream().CloseSend()
 		if err := s.grpcClient.Close(); err != nil {
 			log.Printf("failed to close client: %v", err)
+		} else {
+			fmt.Println("grpcClient closed success")
 		}
 	}
 

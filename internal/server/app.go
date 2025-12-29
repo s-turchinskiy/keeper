@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
-	"github.com/s-turchinskiy/keeper/cmd/server/config"
+	"github.com/s-turchinskiy/keeper/internal/server/config"
 	grpc2 "github.com/s-turchinskiy/keeper/internal/server/grpc"
 	"github.com/s-turchinskiy/keeper/internal/server/repository"
 	"github.com/s-turchinskiy/keeper/internal/server/repository/postgres"
@@ -54,6 +54,7 @@ func (a *App) Run() error {
 }
 
 func (a *App) Stop(ctx context.Context) {
+
 	a.grpcServer.GracefulStop()
 	a.db.Close(ctx)
 }
